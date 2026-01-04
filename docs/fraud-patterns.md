@@ -108,24 +108,26 @@ This analysis identifies **$295.68 million in fraud exposure** across 558,211 Me
 
 **Two Distinct Fraud Strategies:**
 
-- Volume-Based Fraud (**High claims, lower per-claim**):
+Volume-Based Fraud (**High claims, lower per-claim**):
 
-PRV51459: 8,240 claims but only $281.78 average
-PRV55215: 3,393 claims but $673.32 average
-PRV56560: 2,313 claims but $1,388.67 average
-Strategy: Small fraud per claim × massive volume = large total
-Detection: Easy to spot by volume (thousands of claims from one provider)
+- PRV51459: 8,240 claims but only $281.78 average
+- PRV55215: 3,393 claims but $673.32 average
+- PRV56560: 2,313 claims but $1,388.67 average
+  
+- Strategy: Small fraud per claim × massive volume = large total
+- Detection: Easy to spot by volume (thousands of claims from one provider)
 
 
-- Upcoding Fraud (**Low claims, high per-claim**):
+Upcoding Fraud (**Low claims, high per-claim**):
 
-PRV52846: Only 241 claims but $8,784.27 average = $2.1M total
-PRV51501: Only 233 claims but $8,889.74 average = $2.1M total
-PRV54765: Only 239 claims but $8,370.29 average = $2.0M total
-Strategy: Inflate each claim value, fewer claims needed
-Detection: Harder to spot (legitimate but overpriced claims)
+- PRV52846: Only 241 claims but $8,784.27 average = $2.1M total
+- PRV51501: Only 233 claims but $8,889.74 average = $2.1M total
+- PRV54765: Only 239 claims but $8,370.29 average = $2.0M total
 
-- Key Insight: These 20 providers use different fraud methods but achieve similar results - indicating sophisticated, coordinated fraud rather than independent schemes.
+- Strategy: Inflate each claim value, fewer claims needed
+- Detection: Harder to spot (legitimate but overpriced claims)
+
+**Key Insight:** These 20 providers use different fraud methods but achieve similar results - indicating sophisticated, coordinated fraud rather than independent schemes.
 
 
 ### 2.3 Provider Type & Fraud
