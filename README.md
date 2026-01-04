@@ -160,7 +160,7 @@ This project builds a comprehensive fraud detection system for healthcare insura
 
 #### 1. Clone Repository
 ```bash
-git clone https://github.com/yourusername/medical-insurance-claims-fraud-detection.git
+git clone https://github.com/ChloeA27/medical-insurance-claims-fraud-detection.git
 cd medical-insurance-claims-fraud-detection
 ```
 
@@ -355,8 +355,8 @@ medical-insurance-claims-fraud-detection/
 
 This is a portfolio project, but feedback is welcome!
 
-- Found a bug? [Open an issue](https://github.com/yourusername/project/issues)
-- Have suggestions? [Discussions](https://github.com/yourusername/project/discussions)
+- Found a bug? [Open an issue](https://github.com/ChloeA27/project/issues)
+- Have suggestions? [Discussions](https://github.com/ChloeA27/project/discussions)
 - Want to extend it? Fork and create a PR!
 
 ---
@@ -369,16 +369,14 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) for deta
 
 ## 👤 Author
 
-**Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-- LinkedIn: [Your Profile](https://linkedin.com/in/yourprofile)
+**Qi An**
+- GitHub: [@ChloeA27](https://github.com/ChloeA27)
+- LinkedIn: [Qi An](https://www.linkedin.com/in/qianchloe/) 
 - Email: your.email@example.com
 
 ### Project Timeline
-- Started: [Date]
-- Completed: [Date]
-- Course: Northeastern University (Data Engineering / Analytics)
-
+- Started: [Oct 2025]
+- Completed: [Dec 2025]
 ---
 
 ## 🙏 Acknowledgments
@@ -391,7 +389,7 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) for deta
 
 ## 📞 Questions?
 
-Feel free to reach out or check the [discussions](https://github.com/yourusername/project/discussions) section!
+Feel free to reach out or check the [discussions](https://github.com/ChloeA27/project/discussions) section!
 
 ⭐ If this project helped you, please star it! ⭐
 
