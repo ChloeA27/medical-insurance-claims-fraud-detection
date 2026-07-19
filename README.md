@@ -20,7 +20,7 @@
 
 ---
 
-## 🎯 Overview
+## Overview
 
 This project builds a comprehensive fraud detection system for healthcare insurance claims using cloud-native architecture and dimensional modeling. It processes 558,211 claims and identifies fraudulent patterns through:
 
@@ -36,7 +36,7 @@ This project builds a comprehensive fraud detection system for healthcare insura
 
 ---
 
-## 📊 Key Results
+## Key Results
 
 | Metric | Value |
 |--------|-------|
@@ -66,7 +66,7 @@ extract used to verify them.*
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -137,7 +137,7 @@ extract used to verify them.*
 
 ---
 
-## 🛠️ Technologies
+## Technologies
 
 ### Cloud Platform
 - **AWS S3**: Data lake storage (raw CSV files)
@@ -165,7 +165,7 @@ extract used to verify them.*
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - AWS Account (Free Tier eligible)
@@ -239,7 +239,7 @@ local CSV extracts for import.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 medical-insurance-claims-fraud-detection/
@@ -279,7 +279,7 @@ medical-insurance-claims-fraud-detection/
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 | Document | Purpose |
 |----------|---------|
@@ -330,7 +330,7 @@ dataset.
 
 ---
 
-## 🔍 Key Findings
+## Key Findings
 
 ### Finding #1: Provider Risk Concentration
 - Top 50 providers (0.92% of all 5,410 providers) account for ~35% of total fraud exposure
@@ -371,7 +371,7 @@ dataset.
 
 ---
 
-## 🎓 What I Learned
+## What I Learned
 
 ### Technical Skills
 ✅ **Cloud Architecture**: Designed serverless, scalable AWS pipelines
