@@ -32,28 +32,37 @@ This project builds a comprehensive fraud detection system for healthcare insura
 
 **Original Problem**: Insurance companies lose ~$68B/year to fraud. Manual review catches only 5-10% of fraudulent claims.
 
-**Our Solution**: Automated detection system identifying $295.68M fraud exposure with 85%+ accuracy.
+**Our Solution**: An automated dimensional-modeling pipeline that identifies $295.68M in fraud exposure concentrated among a small subset of providers (see [Key Results](#-key-results) below).
 
 ---
 
 ## 📊 Key Results
 
-| Metric | Value | Achievement |
-|--------|-------|-------------|
-| **Claims Processed** | 558,211 | 100% of dataset |
-| **Processing Time** | <5 minutes | 99.7% improvement over manual |
-| **Fraud Exposure Identified** | $295.68M | 38.12% of total claims |
-| **Top Risk Providers** | 50 providers | 35% of total fraud |
-| **Detection Accuracy** | 85%+ | Against known fraudulent providers |
-| **False Positive Reduction** | 50% | Through pattern analysis |
-| **Query Response Time** | <10 seconds | On 558K+ records |
+| Metric | Value |
+|--------|-------|
+| **Claims Processed** | 558,211 (100% of dataset) |
+| **Fraud Exposure Identified** | $295.68M (38.12% of total claims) |
+| **Fraudulent Providers** | 506 of 5,410 providers (9.35%) |
+| **Provider Risk Concentration** | Top 50 providers (0.92% of all providers) account for ~35% of total fraud exposure |
+
+*All figures above are computed directly from the star schema — see
+[`powerbi/data_prep.py`](./powerbi/data_prep.py) for the reproducible
+extract used to verify them.*
 
 ### Top Fraud Findings:
-1. **Provider Risk Concentration**: Top 50 providers (1.8% of 5,410 providers) account for 35% of fraudulent claims
-2. **Diagnosis Anomalies**: Certain diagnosis-procedure combinations occur 10x more in fraud cases
-3. **Patient Pattern**: High-risk patients visit fraudulent providers 3x more frequently
-4. **Geographic Clustering**: 67% of fraud concentrated in 5 states
-5. **Seasonal Patterns**: Fraud spikes 25% in Q4 (billing year-end)
+1. **Provider Risk Concentration**: The 50 highest fraud-exposure providers (0.92% of 5,410 total providers) account for ~35% of total fraud exposure — fraud is highly concentrated among a small number of providers rather than spread evenly.
+2. **Provider-Level Fraud Rate**: 506 providers (9.35% of all providers) are flagged as potentially fraudulent in the source data, and these providers' claims make up the entire $295.68M fraud exposure figure.
+3. **Modest Diagnosis-Procedure Enrichment**: The highest-fraud-rate diagnosis/procedure combinations (with ≥100 claims) show fraud rates around 60-64%, versus a 38.12% dataset-wide baseline — roughly 1.6x enrichment, not the dramatic multiples sometimes claimed in early drafts of this analysis.
+4. **No Meaningful Seasonal Pattern**: Quarterly fraud rate is essentially flat (37.95%-38.22% across all four quarters) — fraud in this dataset does not show a seasonal spike.
+
+> **Note:** earlier versions of this README claimed geographic
+> concentration ("67% of fraud in 5 states") and a Q4 seasonal spike
+> ("+25%"). Both were checked against the underlying data and found to
+> be incorrect — state-level geographic analysis isn't actually possible
+> from this dataset (patient location is a numeric SSA/CMS code with no
+> name mapping in the ETL, see `docs/data-dictionary.md`), and the real
+> quarterly fraud rate is flat, not seasonal. Both claims have been
+> removed rather than corrected with guessed numbers.
 
 ---
 
@@ -117,6 +126,14 @@ This project builds a comprehensive fraud detection system for healthcare insura
 ```
 
 **See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed diagrams and AWS service explanations.**
+
+> **Note on the Tableau dashboards:** the original dashboards shown in the
+> architecture diagram above were built during a 14-day Tableau Desktop
+> trial and are no longer accessible now that the trial has expired. The
+> BI layer for this project has since moved to **Power BI** — see the
+> [Power BI Semantic Model & Dashboard](#power-bi-semantic-model--dashboard)
+> section below for the actively maintained semantic model, DAX measures,
+> and dashboard spec.
 
 ---
 
@@ -186,11 +203,11 @@ aws s3 mb s3://your-project-bucket-name
 aws s3 cp data/sample-data/ s3://your-project-bucket-name/raw/ --recursive
 ```
 
-#### 4. Create Lambda Function
+#### 4. Deploy the Lambda Function
 ```bash
 cd lambda/
-pip install -r requirements.txt
-# Deploy to AWS Lambda (see lambda/README.md)
+# Deploy all-in-one-lambda-etl.py (single-file version) or etl_pipeline.py
+# + athena_executor.py + config.py to AWS Lambda — see lambda/README.md
 ```
 
 #### 5. Run ETL Pipeline
@@ -204,20 +221,21 @@ aws lambda invoke \
 
 #### 6. Query Results
 ```sql
--- Run queries from sql/analytics/
+-- Run queries directly in Athena against the tables built by sql/01-views,
+-- sql/02-dims, sql/03-facts
 SELECT * FROM fact_claims_etl LIMIT 10;
 SELECT * FROM dim_provider_etl WHERE is_fraudulent = true;
 ```
 
-#### 7. View Dashboards
-```bash
-# Open Tableau with:
-# - Athena as data source
-# - Star schema tables as basis
-# - See dashboards/ for specifications
-```
+#### 7. Build a Dashboard
+The original Tableau dashboards for this project are no longer available
+(built during a 14-day trial that has since expired). The current,
+actively maintained BI layer is Power BI — see
+[`powerbi/DASHBOARD_SPEC.md`](./powerbi/DASHBOARD_SPEC.md) for the layout
+spec and [`powerbi/data_prep.py`](./powerbi/data_prep.py) to generate
+local CSV extracts for import.
 
-**See [SETUP.md](./docs/SETUP.md) for detailed instructions.**
+**See [ARCHITECTURE.md](./ARCHITECTURE.md) for the full pipeline design.**
 
 ---
 
@@ -226,43 +244,37 @@ SELECT * FROM dim_provider_etl WHERE is_fraudulent = true;
 ```
 medical-insurance-claims-fraud-detection/
 ├── README.md                    ← You are here
-├── ARCHITECTURE.md              ← System design
-├── PROJECT_REPORT.md            ← Academic report
+├── ARCHITECTURE.md              ← System design (as built)
+├── PROJECT_PROPOSAL.md          ← Original project-initiation document
 ├── RESULTS.md                   ← Key findings
 │
 ├── docs/                        ← Documentation
 │   ├── data-dictionary.md
 │   ├── fraud-patterns.md
-│   ├── technical-decisions.md
-│   └── SETUP.md
+│   └── technical-decisions.md
 │
-├── sql/                         ← SQL queries (commented)
-│   ├── 01-create-views.sql
-│   ├── 02-dim-tables.sql
-│   ├── 03-fact-tables.sql
-│   └── analytics/
+├── sql/                         ← Athena SQL, by layer
+│   ├── 01-views/                ← Raw → cleaned _etl views
+│   ├── 02-dims/                 ← Dimension table CTAS
+│   ├── 03-facts/                ← Fact table CTAS
+│   └── README.md
 │
-├── lambda/                      ← Serverless ETL code
-│   ├── etl-pipeline.py
-│   ├── requirements.txt
-│   └── example-event.json
+├── lambda/                      ← Serverless ETL orchestration
+│   ├── etl_pipeline.py          ← Lambda handler (step-based orchestration)
+│   ├── all-in-one-lambda-etl.py ← Single-file deployable version
+│   ├── athena_executor.py       ← Athena query execution helper
+│   ├── config.py
+│   └── README.md
 │
-├── data/                        ← Sample data & schemas
-│   ├── sample-data/
-│   └── schema-definitions.yaml
+├── data/
+│   └── sample-data/             ← Raw Kaggle CSVs
 │
-├── dashboards/                  ← Tableau specs & screenshots
-│   ├── dashboard-screenshots/
-│   └── tableau-workbook-specs.md
-│
-├── notebooks/                   ← Jupyter analysis notebooks
-│   ├── 01-eda.ipynb
-│   └── 02-fraud-analysis.ipynb
-│
-└── architecture/               ← Diagrams & visuals
-    ├── aws-architecture.png
-    ├── star-schema.png
-    └── data-flow.png
+└── powerbi/                     ← Power BI semantic model layer
+    ├── data_prep.py
+    ├── SEMANTIC_MODEL.md
+    ├── RLS_DESIGN.md
+    ├── DASHBOARD_SPEC.md
+    └── screenshots/
 ```
 
 ---
@@ -271,8 +283,8 @@ medical-insurance-claims-fraud-detection/
 
 | Document | Purpose |
 |----------|---------|
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | System design, AWS services, data flow |
-| [PROJECT_REPORT.md](./PROJECT_REPORT.md) | Full academic/business report (25 pages) |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | System design, AWS services, data flow (as built) |
+| [PROJECT_PROPOSAL.md](./PROJECT_PROPOSAL.md) | Original project-initiation document (goals & target architecture at kickoff) |
 | [Data Dictionary](./docs/data-dictionary.md) | Field definitions, data types, transformations |
 | [Fraud Patterns](./docs/fraud-patterns.md) | Detailed fraud findings & insights |
 | [Technical Decisions](./docs/technical-decisions.md) | Why specific tools were chosen |
@@ -321,26 +333,20 @@ dataset.
 ## 🔍 Key Findings
 
 ### Finding #1: Provider Risk Concentration
-- Top 50 providers (0.9% of providers) = 35% of fraud
-- 1 provider alone: $4.8M fraudulent claims
+- Top 50 providers (0.92% of all 5,410 providers) account for ~35% of total fraud exposure
+- The single highest-exposure provider alone accounts for ~$6.0M in fraudulent claims
 
-### Finding #2: Diagnosis-Procedure Anomalies  
-- Certain combinations appear 10x more in fraud cases
-- Example: Chest pain (786.50) + Joint replacement (81.55)
+### Finding #2: Provider-Level Fraud Rate
+- 506 of 5,410 providers (9.35%) are flagged as potentially fraudulent
+- These providers' claims make up the entire $295.68M fraud exposure figure
 
-### Finding #3: Geographic Clustering
-- 67% of fraud in 5 states
-- Miami, Los Angeles, Chicago are hotspots
+### Finding #3: Modest Diagnosis-Procedure Enrichment
+- The highest-fraud-rate diagnosis/procedure pairs (with ≥100 claims) run ~60-64% fraud rate vs. a 38.12% baseline — a real but modest (~1.6x) enrichment, not an order-of-magnitude effect
 
-### Finding #4: Seasonal Patterns
-- Q4 fraud increases 25%
-- Coincides with annual billing reconciliations
+### Finding #4: No Seasonal Pattern
+- Quarterly fraud rate is flat (37.95%-38.22% across all four quarters) — this dataset shows no meaningful seasonality
 
-### Finding #5: Patient Risk Correlation
-- High-risk patients visit fraudulent providers 3x more
-- Suggests coordinated fraud networks
-
-**See [RESULTS.md](./RESULTS.md) for visualizations and detailed analysis.**
+**See [RESULTS.md](./RESULTS.md) for the full methodology and verification queries.**
 
 ---
 
