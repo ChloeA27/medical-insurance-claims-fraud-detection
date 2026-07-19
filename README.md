@@ -14,6 +14,7 @@
 - [Getting Started](#getting-started)
 - [Project Structure](#project-structure)
 - [Documentation](#documentation)
+- [Power BI Semantic Model & Dashboard](#power-bi-semantic-model--dashboard)
 - [Key Findings](#key-findings)
 - [What I Learned](#what-i-learned)
 
@@ -280,6 +281,43 @@ medical-insurance-claims-fraud-detection/
 
 ---
 
+## Power BI Semantic Model & Dashboard
+
+In addition to the Tableau dashboards above, this project includes a
+**Power BI semantic model** built on the same star schema — a second BI
+layer demonstrating data modeling, DAX, and RLS design on a nonconfidential
+dataset.
+
+- **[`powerbi/data_prep.py`](./powerbi/data_prep.py)** — a pandas
+  re-implementation of the `sql/01-views` → `sql/02-dims` → `sql/03-facts`
+  transformation logic, producing clean star-schema CSV extracts from the
+  raw Kaggle source files (no AWS account required). Validated against the
+  production Athena pipeline: the extract reproduces the same 558,211
+  claims, $295.68M fraud exposure, and 38.12% fraud rate reported above.
+  Run it with:
+  ```bash
+  pip install -r powerbi/requirements.txt
+  python powerbi/data_prep.py
+  # → writes 8 CSVs to powerbi/extracts/, ready for Power BI's Get Data > Text/CSV
+  ```
+- **[`powerbi/SEMANTIC_MODEL.md`](./powerbi/SEMANTIC_MODEL.md)** — table
+  relationships (with cardinality) and 12 DAX measures (fraud rate, fraud
+  exposure, provider risk concentration, YoY/QoQ trends, state-level fraud
+  density)
+- **[`powerbi/RLS_DESIGN.md`](./powerbi/RLS_DESIGN.md)** — a state-based
+  row-level security demo with DAX filter expressions
+- **[`powerbi/DASHBOARD_SPEC.md`](./powerbi/DASHBOARD_SPEC.md)** — a
+  2-page dashboard layout spec (executive fraud overview + provider risk
+  deep-dive), listing every visual, its fields, and cross-filter
+  interactions
+
+**Screenshots** (added after building the report in Power BI Desktop):
+
+![Power BI — Executive Fraud Overview](./powerbi/screenshots/page1-executive-overview.png)
+![Power BI — Provider Risk Deep-Dive](./powerbi/screenshots/page2-provider-risk.png)
+
+---
+
 ## 🔍 Key Findings
 
 ### Finding #1: Provider Risk Concentration
@@ -355,8 +393,6 @@ medical-insurance-claims-fraud-detection/
 
 This is a portfolio project, but feedback is welcome!
 
-- Found a bug? [Open an issue](https://github.com/ChloeA27/project/issues)
-- Have suggestions? [Discussions](https://github.com/ChloeA27/project/discussions)
 - Want to extend it? Fork and create a PR!
 
 ---
@@ -371,12 +407,12 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) for deta
 
 **Qi An**
 - GitHub: [@ChloeA27](https://github.com/ChloeA27)
-- LinkedIn: [Qi An](https://www.linkedin.com/in/qianchloe/) 
-- Email: your.email@example.com
+- LinkedIn: [Qi An](https://www.linkedin.com/in/qianchloe/)
 
 ### Project Timeline
-- Started: [Oct 2025]
-- Completed: [Dec 2025]
+- Started: Oct 2025
+- Completed: Dec 2025
+
 ---
 
 ## 🙏 Acknowledgments
@@ -386,10 +422,6 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) for deta
 - **Tools**: AWS, Tableau, open-source community
 
 ---
-
-## 📞 Questions?
-
-Feel free to reach out or check the [discussions](https://github.com/ChloeA27/project/discussions) section!
 
 ⭐ If this project helped you, please star it! ⭐
 
