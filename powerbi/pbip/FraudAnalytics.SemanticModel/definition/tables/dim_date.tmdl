@@ -1,0 +1,83 @@
+table dim_date
+	lineageTag: d8854daa-a5c4-445f-aa44-fea4f470f811
+	dataCategory: Time
+
+	column date_key
+		dataType: int64
+		isHidden
+		lineageTag: 5d0880e2-91d9-4df8-90b9-522d849affdc
+		summarizeBy: none
+		sourceColumn: date_key
+
+	column full_date
+		dataType: dateTime
+		isKey
+		formatString: yyyy-mm-dd
+		lineageTag: 8841666a-55f4-41c1-b4c6-9e60558fdaac
+		summarizeBy: none
+		sourceColumn: full_date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column year
+		dataType: int64
+		lineageTag: 7449a46e-9fe4-4d41-9779-8cf674da4340
+		summarizeBy: none
+		sourceColumn: year
+
+	column quarter
+		dataType: int64
+		lineageTag: 83593518-8a30-464c-9422-da5d91a939e5
+		summarizeBy: none
+		sourceColumn: quarter
+
+	column month
+		dataType: int64
+		isHidden
+		lineageTag: c2d6961c-35f7-4e74-92c0-d842f853791f
+		summarizeBy: none
+		sourceColumn: month
+
+	column month_name
+		dataType: string
+		lineageTag: 591cd4c8-d892-4d89-8b53-f3279ffd7657
+		summarizeBy: none
+		sourceColumn: month_name
+		sortByColumn: month
+
+	column day_of_month
+		dataType: int64
+		lineageTag: 7b9eb2c1-9e35-466a-b2ed-dbb61d08faf4
+		summarizeBy: none
+		sourceColumn: day_of_month
+
+	column day_of_week
+		dataType: int64
+		isHidden
+		lineageTag: f6ba7619-898a-4966-b345-26b0cea8b2ff
+		summarizeBy: none
+		sourceColumn: day_of_week
+
+	column day_name
+		dataType: string
+		lineageTag: 5d0ab4f2-6601-4a97-b033-c0975f15f62c
+		summarizeBy: none
+		sourceColumn: day_name
+		sortByColumn: day_of_week
+
+	column is_weekend
+		dataType: boolean
+		lineageTag: af4bc61c-4a31-490f-a67e-c824bf0d708b
+		summarizeBy: none
+		sourceColumn: is_weekend
+
+	column year_month
+		dataType: string
+		lineageTag: 9c67080e-0fdb-4d8d-9e29-bc4af8130c83
+		summarizeBy: none
+		sourceColumn: year_month
+
+	partition dim_date = m
+		mode: import
+		source = let Source = Csv.Document(File.Contents(ExtractsFolder & "\dim_date.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]), Selected = Table.SelectColumns(Promoted, {"date_key", "full_date", "year", "quarter", "month", "month_name", "day_of_month", "day_of_week", "day_name", "is_weekend", "year_month"}), Typed = Table.TransformColumnTypes(Selected, {{"date_key", Int64.Type}, {"full_date", type date}, {"year", Int64.Type}, {"quarter", Int64.Type}, {"month", Int64.Type}, {"month_name", type text}, {"day_of_month", Int64.Type}, {"day_of_week", Int64.Type}, {"day_name", type text}, {"is_weekend", type logical}, {"year_month", type text}}, "en-US") in Typed
+

@@ -1,0 +1,7 @@
+role Analyst_State10
+	modelPermission: read
+
+	tablePermission dim_patient = [state_code] = 10
+
+	annotation PBI_Id = 4e003b288e3d40bd8caf93c78a2cf112
+

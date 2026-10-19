@@ -1,2 +1,6 @@
 .DS_Store
 powerbi/extracts/
+
+# Power BI Project local caches
+**/.pbi/localSettings.json
+**/.pbi/cache.abf

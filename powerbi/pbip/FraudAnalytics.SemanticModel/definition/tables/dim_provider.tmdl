@@ -1,0 +1,51 @@
+table dim_provider
+	lineageTag: f5e1b179-0a31-4236-b33e-4516042376b4
+
+	column provider_sk
+		dataType: int64
+		isHidden
+		lineageTag: 1881a5a8-4955-4d24-9ba6-3512f134683c
+		summarizeBy: none
+		sourceColumn: provider_sk
+
+	column provider_id
+		dataType: string
+		lineageTag: a8e18e38-9492-4588-b78f-91c4a45a0cd3
+		summarizeBy: none
+		sourceColumn: provider_id
+
+	column is_fraudulent
+		dataType: boolean
+		lineageTag: 04a3c776-7045-4da4-a14a-16f5d76e0e53
+		summarizeBy: none
+		sourceColumn: is_fraudulent
+
+	column provider_type
+		dataType: string
+		lineageTag: a91e5f1e-88dd-4846-b556-a203bda817c0
+		summarizeBy: none
+		sourceColumn: provider_type
+
+	column risk_level
+		dataType: string
+		lineageTag: 440a04c7-d5b6-455e-830c-d2098fb88747
+		summarizeBy: none
+		sourceColumn: risk_level
+
+	column activity_level
+		dataType: string
+		lineageTag: 14bd2727-ce1e-4e4a-b7d1-b50066efce2c
+		summarizeBy: none
+		sourceColumn: activity_level
+
+	column avg_length_of_stay
+		dataType: double
+		formatString: 0.0
+		lineageTag: 06542915-ca84-4d93-a824-cb37115cfa46
+		summarizeBy: none
+		sourceColumn: avg_length_of_stay
+
+	partition dim_provider = m
+		mode: import
+		source = let Source = Csv.Document(File.Contents(ExtractsFolder & "\dim_provider.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]), Selected = Table.SelectColumns(Promoted, {"provider_sk", "provider_id", "is_fraudulent", "provider_type", "risk_level", "activity_level", "avg_length_of_stay"}), Typed = Table.TransformColumnTypes(Selected, {{"provider_sk", Int64.Type}, {"provider_id", type text}, {"is_fraudulent", type logical}, {"provider_type", type text}, {"risk_level", type text}, {"activity_level", type text}, {"avg_length_of_stay", type number}}, "en-US") in Typed
+

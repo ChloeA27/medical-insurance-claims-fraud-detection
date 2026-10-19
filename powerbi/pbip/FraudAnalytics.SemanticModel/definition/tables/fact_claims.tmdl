@@ -1,0 +1,185 @@
+table fact_claims
+	lineageTag: adcf522c-7514-4d75-8645-f30e2559bcc2
+
+	measure 'Total Claims' = COUNTROWS ( fact_claims )
+		formatString: #,##0
+		displayFolder: Core
+		lineageTag: 1ff8ab8d-ff40-4a13-94f0-3f59d3c9d237
+
+	measure 'Total Claim Amount $' = SUM ( fact_claims[claim_amount] )
+		formatString: $#,##0
+		displayFolder: Core
+		lineageTag: b678f886-c442-4659-8afc-152c30a39364
+
+	measure 'Avg Claim Amount' = AVERAGE ( fact_claims[claim_amount] )
+		formatString: $#,##0
+		displayFolder: Core
+		lineageTag: 0396b828-5be6-4604-b2a3-4f3e0e72d1d7
+
+	measure 'Inpatient Share %' = DIVIDE ( CALCULATE ( [Total Claims], fact_claims[claim_type] = "Inpatient" ), [Total Claims] )
+		formatString: 0.0%
+		displayFolder: Core
+		lineageTag: 2fecd8ee-892e-40ea-9297-08a92f699cce
+
+	measure 'Fraud Claim Count' = CALCULATE ( [Total Claims], fact_claims[is_fraudulent] = TRUE () )
+		formatString: #,##0
+		displayFolder: Fraud Exposure
+		lineageTag: d2cf6c05-accc-428e-bb34-9b78b43b83b5
+
+	measure 'Fraud Rate %' = DIVIDE ( [Fraud Claim Count], [Total Claims] )
+		formatString: 0.0%
+		displayFolder: Fraud Exposure
+		lineageTag: a5949963-7e13-46fd-89e7-d9e3e3103146
+
+	measure 'Total Fraud Exposure $' = CALCULATE ( [Total Claim Amount $], fact_claims[is_fraudulent] = TRUE () )
+		formatString: $#,##0
+		displayFolder: Fraud Exposure
+		lineageTag: 4a56dbc0-e42b-4cfa-b44a-be0f8b531e4e
+
+	measure 'Fraud Exposure % of Total $' = DIVIDE ( [Total Fraud Exposure $], [Total Claim Amount $] )
+		formatString: 0.0%
+		displayFolder: Fraud Exposure
+		lineageTag: a4ad2771-a1a9-487c-9e8d-dc2ea90d50d4
+
+	measure 'Fraud Rate Lift (x)' = VAR Baseline = CALCULATE ( [Fraud Rate %], REMOVEFILTERS ( dim_diagnosis ), REMOVEFILTERS ( dim_procedure ) ) RETURN DIVIDE ( [Fraud Rate %], Baseline )
+		formatString: 0.00
+		displayFolder: Fraud Exposure
+		lineageTag: 43f16db5-be05-40d3-965c-d4d31d346d36
+
+	measure 'Distinct Fraudulent Providers' = CALCULATE ( DISTINCTCOUNT ( fact_claims[provider_sk] ), fact_claims[is_fraudulent] = TRUE () )
+		formatString: #,##0
+		displayFolder: Provider Risk
+		lineageTag: 146427a3-e6f2-405f-9592-79beba2c9e47
+
+	measure 'Fraud Exposure per Fraudulent Provider $' = DIVIDE ( [Total Fraud Exposure $], [Distinct Fraudulent Providers] )
+		formatString: $#,##0
+		displayFolder: Provider Risk
+		lineageTag: f2f8701e-ff54-450e-940c-63879438d752
+
+	measure 'Top 50 Provider Fraud Share %' = VAR ProviderFraud = ADDCOLUMNS ( CALCULATETABLE ( VALUES ( fact_claims[provider_sk] ), fact_claims[is_fraudulent] = TRUE () ), "@FraudAmt", [Total Fraud Exposure $] ) VAR Top50Total = SUMX ( TOPN ( 50, ProviderFraud, [@FraudAmt], DESC ), [@FraudAmt] ) RETURN DIVIDE ( Top50Total, SUMX ( ProviderFraud, [@FraudAmt] ) )
+		formatString: 0.0%
+		displayFolder: Provider Risk
+		lineageTag: fe267586-0a3c-4040-b032-471fa562b28e
+
+		changedProperty = IsHidden
+
+	measure 'Claim Amount Prior Month $' = CALCULATE ( [Total Claim Amount $], DATEADD ( dim_date[full_date], -1, MONTH ) )
+		formatString: $#,##0
+		displayFolder: Trend
+		lineageTag: 1caf903e-ed25-401b-b9fb-93c964d5502c
+
+	measure 'Claim Amount MoM %' = DIVIDE ( [Total Claim Amount $] - [Claim Amount Prior Month $], [Claim Amount Prior Month $] )
+		formatString: 0.0%
+		displayFolder: Trend
+		lineageTag: 8807464b-7402-49bb-b727-c3c071d6028d
+
+	measure 'Claim Count QoQ %' = VAR PriorQ = CALCULATE ( [Total Claims], DATEADD ( dim_date[full_date], -1, QUARTER ) ) RETURN DIVIDE ( [Total Claims] - PriorQ, PriorQ )
+		formatString: 0.0%
+		displayFolder: Trend
+		lineageTag: f97f05da-8175-4770-8d02-bd46700d22f1
+
+	column claim_sk
+		dataType: int64
+		isHidden
+		lineageTag: 409bfd3c-c0ad-454b-b1e0-e5155b8e9c56
+		summarizeBy: none
+		sourceColumn: claim_sk
+
+	column patient_sk
+		dataType: int64
+		isHidden
+		lineageTag: 06b76555-7b6d-4ad9-97eb-c47730a384c1
+		summarizeBy: none
+		sourceColumn: patient_sk
+
+	column provider_sk
+		dataType: int64
+		isHidden
+		lineageTag: 6f0d5cb8-ea0c-467a-83be-03c23ccd35a3
+		summarizeBy: none
+		sourceColumn: provider_sk
+
+	column claim_start_date_key
+		dataType: int64
+		isHidden
+		lineageTag: 6929a884-0d40-485d-833a-311e356494ea
+		summarizeBy: none
+		sourceColumn: claim_start_date_key
+
+	column claim_end_date_key
+		dataType: int64
+		isHidden
+		lineageTag: b6b21090-cecc-4996-8a59-a4d899eb1d39
+		summarizeBy: none
+		sourceColumn: claim_end_date_key
+
+	column admission_date_key
+		dataType: int64
+		isHidden
+		lineageTag: 467a99d2-4186-4380-b66f-8337427b93fa
+		summarizeBy: none
+		sourceColumn: admission_date_key
+
+	column discharge_date_key
+		dataType: int64
+		isHidden
+		lineageTag: 63d053d9-a905-4b31-ba95-01811c44bdea
+		summarizeBy: none
+		sourceColumn: discharge_date_key
+
+	column claim_id
+		dataType: string
+		lineageTag: 64d48d17-7125-4a1b-aa03-b5a661dbc2d2
+		summarizeBy: none
+		sourceColumn: claim_id
+
+	column claim_type
+		dataType: string
+		lineageTag: a95ac0db-0cf5-47fb-b20c-3c1c5f5cac33
+		summarizeBy: none
+		sourceColumn: claim_type
+
+	column claim_amount
+		dataType: int64
+		formatString: $#,##0
+		lineageTag: 036b9cde-a0fd-47df-be0f-46ae48742ba5
+		summarizeBy: sum
+		sourceColumn: claim_amount
+
+	column deductible_amount
+		dataType: double
+		formatString: $#,##0
+		lineageTag: b7973233-d580-421d-ad61-39652b977912
+		summarizeBy: sum
+		sourceColumn: deductible_amount
+
+	column length_of_stay
+		dataType: int64
+		lineageTag: 20d63c3e-8267-4b18-9935-74cdee4965a4
+		summarizeBy: average
+		sourceColumn: length_of_stay
+
+	column is_fraudulent
+		dataType: boolean
+		lineageTag: 55f2082e-4a89-4440-a38a-a659576d2e1c
+		summarizeBy: none
+		sourceColumn: is_fraudulent
+
+	column diagnosis_code_1
+		dataType: string
+		isHidden
+		lineageTag: 03583168-0540-4875-b1a7-ec0161738c58
+		summarizeBy: none
+		sourceColumn: diagnosis_code_1
+
+	column procedure_code_1
+		dataType: string
+		isHidden
+		lineageTag: 03dc2f2d-d723-4a78-b197-4c3dc6f3a08f
+		summarizeBy: none
+		sourceColumn: procedure_code_1
+
+	partition fact_claims = m
+		mode: import
+		source = let Source = Csv.Document(File.Contents(ExtractsFolder & "\fact_claims.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]), Selected = Table.SelectColumns(Promoted, {"claim_sk", "patient_sk", "provider_sk", "claim_start_date_key", "claim_end_date_key", "admission_date_key", "discharge_date_key", "claim_id", "claim_type", "claim_amount", "deductible_amount", "length_of_stay", "is_fraudulent", "diagnosis_code_1", "procedure_code_1"}), Typed = Table.TransformColumnTypes(Selected, {{"claim_sk", Int64.Type}, {"patient_sk", Int64.Type}, {"provider_sk", Int64.Type}, {"claim_start_date_key", Int64.Type}, {"claim_end_date_key", Int64.Type}, {"admission_date_key", Int64.Type}, {"discharge_date_key", Int64.Type}, {"claim_id", type text}, {"claim_type", type text}, {"claim_amount", Int64.Type}, {"deductible_amount", type number}, {"length_of_stay", Int64.Type}, {"is_fraudulent", type logical}, {"diagnosis_code_1", type text}, {"procedure_code_1", type text}}, "en-US") in Typed
+

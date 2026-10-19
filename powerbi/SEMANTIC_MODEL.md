@@ -1,13 +1,18 @@
 # Power BI Semantic Model Design
 
-This document specifies the semantic model (relationships + DAX measures) built
-on top of the star-schema CSV extracts produced by [`data_prep.py`](./data_prep.py).
-Import the eight CSVs in `powerbi/extracts/` into Power BI Desktop (**Get Data →
-Text/CSV**) and configure the model as described below.
+This document describes the semantic model (tables, relationships, DAX
+measures) built on top of the star-schema CSV extracts produced by
+[`data_prep.py`](./data_prep.py).
 
-All figures quoted here as examples were computed directly from the extracts
-(see the row counts in the "Grain & Row Counts" table) — they are not
-placeholders.
+**The model is defined as code.** [`tmdl/build_tmdl.py`](./tmdl/build_tmdl.py)
+generates [`tmdl/FraudModel.tmdl`](./tmdl/FraudModel.tmdl), a TMDL
+`createOrReplace` script containing every table (with its Power Query M
+import), relationship, DAX measure, and RLS role. Pasting it into Power BI
+Desktop's TMDL view and clicking **Apply** builds the whole model in one step.
+The script is the source of truth; this document explains the design.
+
+All figures quoted below were computed directly from the extracts. They are
+not placeholders.
 
 ---
 
@@ -16,204 +21,93 @@ placeholders.
 | Table | Type | Grain | Row Count |
 |-------|------|-------|-----------|
 | `fact_claims` | Fact | One row per claim (inpatient + outpatient) | 558,211 |
-| `fact_provider_summary` | Fact | One row per provider × month | 50,997 |
 | `fact_patient_claims_summary` | Fact | One row per patient × month | 445,765 |
 | `dim_patient` | Dimension | One row per patient (`BeneID`) | 138,556 |
 | `dim_provider` | Dimension | One row per provider | 5,410 |
-| `dim_date` | Dimension | One row per calendar date seen in claims | 398 |
+| `dim_date` | Dimension (date table) | One row per calendar day, 2008-01-01 to 2009-12-31 | 731 |
 | `dim_diagnosis` | Dimension | One row per distinct ICD-9 diagnosis code | 11,040 |
 | `dim_procedure` | Dimension | One row per distinct ICD-9 procedure code | 1,324 |
+
+**Design decisions:**
+- **`dim_date` is a contiguous calendar.** The Athena `dim_date` only keeps
+  dates that appear in claims (398 rows with gaps). Power BI's time
+  intelligence functions need a gap-free date table, so `data_prep.py` builds
+  every day of each claim year and the table is marked as a date table
+  (`dataCategory: Time`, key `full_date`).
+- **`fact_provider_summary` is left out of the Power BI model.** It has no
+  path to `dim_patient`, so the state-based RLS roles could not filter it and
+  it would leak every state's totals to a restricted analyst. Provider-level
+  numbers are computed from `fact_claims` through measures instead, which RLS
+  does filter.
+- **Code columns are text.** ICD-9 diagnosis and procedure codes keep leading
+  zeros and include alphanumeric `V`/`E` codes, so both sides of those
+  relationships are typed as text in Power Query.
+- **Measures live on `fact_claims`**, grouped into display folders (Core,
+  Fraud Exposure, Provider Risk, Trend), and implicit aggregation is kept to
+  the amount columns.
 
 ---
 
 ## 2. Relationships
 
-| From (many) | To (one) | Key | Cardinality | Cross-filter | Notes |
-|--------------|----------|-----|-------------|---------------|-------|
-| `fact_claims[patient_sk]` | `dim_patient[patient_sk]` | `patient_sk` | Many-to-one | Single | Active |
-| `fact_claims[provider_sk]` | `dim_provider[provider_sk]` | `provider_sk` | Many-to-one | Single | Active |
-| `fact_claims[claim_start_date_key]` | `dim_date[date_key]` | `date_key` | Many-to-one | Single | **Active** — primary date relationship for time intelligence |
-| `fact_claims[claim_end_date_key]` | `dim_date[date_key]` | `date_key` | Many-to-one | Single | Inactive — use `USERELATIONSHIP()` |
-| `fact_claims[admission_date_key]` | `dim_date[date_key]` | `date_key` | Many-to-one | Single | Inactive — inpatient claims only (0 for outpatient) |
-| `fact_claims[discharge_date_key]` | `dim_date[date_key]` | `date_key` | Many-to-one | Single | Inactive — inpatient claims only |
-| `fact_claims[diagnosis_code_1]` | `dim_diagnosis[diagnosis_code]` | text | Many-to-one | Single | Only the primary diagnosis is modeled as a relationship; codes 2–10 are attribute columns on `fact_claims`, not separately joined (matches the source ETL's `diagnosis_code_1`-only join in `fact_claims_etl.sql`) |
-| `fact_claims[procedure_code_1]` | `dim_procedure[procedure_code]` | text | Many-to-one | Single | Many claims have a blank `procedure_code_1` (no procedure performed) — expect unmatched rows, this is expected |
-| `fact_provider_summary[provider_sk]` | `dim_provider[provider_sk]` | `provider_sk` | Many-to-one | Single | Active |
-| `fact_patient_claims_summary[patient_sk]` | `dim_patient[patient_sk]` | `patient_sk` | Many-to-one | Single | Active |
+| From (many) | To (one) | Active | Notes |
+|-------------|----------|--------|-------|
+| `fact_claims[patient_sk]` | `dim_patient[patient_sk]` | Yes | RLS filters flow through this relationship |
+| `fact_claims[provider_sk]` | `dim_provider[provider_sk]` | Yes | |
+| `fact_claims[claim_start_date_key]` | `dim_date[date_key]` | Yes | Primary date for all time intelligence |
+| `fact_claims[claim_end_date_key]` | `dim_date[date_key]` | No | Use `USERELATIONSHIP()` |
+| `fact_claims[admission_date_key]` | `dim_date[date_key]` | No | Inpatient only (0 for outpatient) |
+| `fact_claims[discharge_date_key]` | `dim_date[date_key]` | No | Inpatient only |
+| `fact_claims[diagnosis_code_1]` | `dim_diagnosis[diagnosis_code]` | Yes | Primary diagnosis only; 98.1% of claims match, the rest have no primary code |
+| `fact_claims[procedure_code_1]` | `dim_procedure[procedure_code]` | Yes | Most claims have no procedure (blank), which is expected |
+| `fact_patient_claims_summary[patient_sk]` | `dim_patient[patient_sk]` | Yes | |
 
-**Not related to `dim_date`:** `fact_provider_summary[month_key]` and
-`fact_patient_claims_summary[month_key]` are `YYYYMM` strings (monthly grain),
-a different grain from `dim_date[date_key]` (daily grain). No relationship is
-defined between them — trend measures at monthly grain use `fact_claims` +
-`dim_date` directly instead (see §4).
-
-**Star schema, single direction:** all relationships filter from dimension →
-fact only (no bidirectional cross-filtering), consistent with Kimball
-dimensional modeling and required for the RLS design in
-[`RLS_DESIGN.md`](./RLS_DESIGN.md) to filter correctly through `fact_claims`.
+All relationships are many-to-one and filter in a single direction
+(dimension to fact), consistent with Kimball dimensional modeling and required
+for the RLS design in [`RLS_DESIGN.md`](./RLS_DESIGN.md).
 
 ---
 
-## 3. Model Diagram (logical)
+## 3. DAX Measures
 
-```
-                      ┌───────────────┐
-                      │  dim_date     │
-                      └───────┬───────┘
-                              │ date_key (active: claim_start_date_key)
-                              │
-┌───────────────┐     ┌───────▼────────┐     ┌───────────────┐
-│  dim_patient  │────▶│  fact_claims   │◀────│  dim_provider │
-└───────┬───────┘     └───────┬────────┘     └───────┬───────┘
-        │                     │                        │
-        │             ┌───────┴────────┐               │
-        │             │                │               │
-        ▼        ┌────▼─────┐    ┌─────▼──────┐         ▼
-fact_patient_    │dim_diag- │    │dim_procedure│  fact_provider_
-claims_summary   │  nosis   │    │            │  summary
-                  └──────────┘    └────────────┘
-```
+Full definitions are in [`tmdl/FraudModel.tmdl`](./tmdl/FraudModel.tmdl).
+Expected values are for the full dataset with no filters applied.
 
----
+| Folder | Measure | Logic | Expected value |
+|--------|---------|-------|----------------|
+| Core | `Total Claims` | `COUNTROWS(fact_claims)` | 558,211 |
+| Core | `Total Claim Amount $` | Sum of reimbursed amount | $556,543,140 |
+| Core | `Avg Claim Amount` | Average reimbursed amount per claim | $997 |
+| Core | `Inpatient Share %` | Inpatient claims / all claims | 7.3% |
+| Fraud Exposure | `Fraud Claim Count` | Claims filed with a provider flagged as potentially fraudulent | 212,796 |
+| Fraud Exposure | `Fraud Rate %` | Fraud claim count / total claims (by count) | 38.1% |
+| Fraud Exposure | `Total Fraud Exposure $` | Reimbursed dollars on claims from flagged providers | $295,681,120 |
+| Fraud Exposure | `Fraud Exposure % of Total $` | Fraud exposure / all reimbursed dollars (by value) | 53.1% |
+| Fraud Exposure | `Fraud Rate Lift (x)` | Fraud rate in the current diagnosis/procedure slice ÷ the rate with those filters removed | 1.00 overall; about 1.6 for the highest-risk diagnosis/procedure pairs |
+| Provider Risk | `Distinct Fraudulent Providers` | Distinct flagged providers with claims in the current filter context | 506 |
+| Provider Risk | `Fraud Exposure per Fraudulent Provider $` | Exposure ÷ distinct flagged providers | $584,350 |
+| Provider Risk | `Top 50 Provider Fraud Share %` | Share of fraud exposure held by the 50 highest-exposure providers (`TOPN` over `ADDCOLUMNS`) | 35.3% |
+| Trend | `Claim Amount Prior Month $` | `DATEADD(dim_date[full_date], -1, MONTH)` | |
+| Trend | `Claim Amount MoM %` | Month-over-month change in reimbursed amount | |
+| Trend | `Claim Count QoQ %` | Quarter-over-quarter change in claim volume | |
 
-## 4. DAX Measures
+**Why two fraud percentages:** 38.1% of claims (by count) come from flagged
+providers, but those claims carry 53.1% of reimbursed dollars, because flagged
+providers bill a higher share of expensive inpatient claims. The dashboard
+shows both so the headline is not misread.
 
-All measures below are written against the table/column names produced by
-`data_prep.py`. Create a dedicated **Measures** table in Power BI to host
-these rather than scattering them across the fact tables.
-
-### Fraud exposure
-
-```dax
-Fraud Claim Count :=
-CALCULATE(
-    COUNTROWS(fact_claims),
-    fact_claims[is_fraudulent] = TRUE()
-)
-```
-> Number of claims filed with a provider flagged as potentially fraudulent.
-
-```dax
-Fraud Rate % :=
-DIVIDE([Fraud Claim Count], COUNTROWS(fact_claims))
-```
-> Share of all claims tied to a flagged provider (≈ 38.1% in the current extract).
-
-```dax
-Total Fraud Exposure $ :=
-CALCULATE(
-    SUM(fact_claims[claim_amount]),
-    fact_claims[is_fraudulent] = TRUE()
-)
-```
-> Total reimbursed dollar amount on claims from flagged providers (≈ $295.7M in the current extract).
-
-```dax
-Fraud Exposure % of Total :=
-DIVIDE([Total Fraud Exposure $], SUM(fact_claims[claim_amount]))
-```
-> Fraud exposure as a share of every dollar reimbursed across the dataset.
-
-### Provider risk concentration
-
-```dax
-Distinct Fraudulent Providers :=
-CALCULATE(
-    DISTINCTCOUNT(dim_provider[provider_id]),
-    dim_provider[is_fraudulent] = TRUE()
-)
-```
-> Count of unique providers flagged as potentially fraudulent.
-
-```dax
-Top 50 Provider Fraud Share % :=
-VAR ProviderFraud =
-    SUMMARIZE(
-        FILTER(fact_claims, fact_claims[is_fraudulent] = TRUE()),
-        fact_claims[provider_sk],
-        "FraudAmt", SUM(fact_claims[claim_amount])
-    )
-VAR Top50 =
-    TOPN(50, ProviderFraud, [FraudAmt], DESC)
-VAR Top50Total =
-    SUMX(Top50, [FraudAmt])
-VAR AllFraudTotal =
-    SUMX(ProviderFraud, [FraudAmt])
-RETURN
-    DIVIDE(Top50Total, AllFraudTotal)
-```
-> Share of total fraud exposure attributable to the 50 highest fraud-exposure providers — a risk-concentration indicator (≈ 35% in the current extract).
-
-### Trend measures
-
-```dax
-Claim Amount PY :=
-CALCULATE(
-    SUM(fact_claims[claim_amount]),
-    SAMEPERIODLASTYEAR(dim_date[full_date])
-)
-```
-> Prior-year total claim amount, for year-over-year comparison.
-
-```dax
-Claim Amount YoY % :=
-DIVIDE(
-    SUM(fact_claims[claim_amount]) - [Claim Amount PY],
-    [Claim Amount PY]
-)
-```
-> Year-over-year growth in total reimbursed claim amount.
-
-```dax
-Claim Count QoQ % :=
-VAR CurrentQ = COUNTROWS(fact_claims)
-VAR PriorQ =
-    CALCULATE(
-        COUNTROWS(fact_claims),
-        DATEADD(dim_date[full_date], -1, QUARTER)
-    )
-RETURN
-    DIVIDE(CurrentQ - PriorQ, PriorQ)
-```
-> Quarter-over-quarter change in claim volume.
-
-### Geographic risk
-
-```dax
-State Fraud Density $ :=
-CALCULATE(
-    SUM(fact_claims[claim_amount]),
-    fact_claims[is_fraudulent] = TRUE()
-)
-```
-> Fraud exposure dollars, sliced by `dim_patient[state_code]` on a map/matrix visual — surfaces geographic concentration (top states in the current extract cluster around state codes 5, 10, 33, 36, 45).
-
-### Provider volume
-
-```dax
-Avg Claim Amount :=
-AVERAGE(fact_claims[claim_amount])
-```
-> Average reimbursed amount per claim, useful as a provider-level outlier signal (compared against `dim_provider[risk_level]`, itself derived from ± std-dev bands around this same average).
-
-```dax
-Inpatient Share % :=
-DIVIDE(
-    CALCULATE(COUNTROWS(fact_claims), fact_claims[claim_type] = "Inpatient"),
-    COUNTROWS(fact_claims)
-)
-```
-> Share of claims that are inpatient (vs. outpatient) — inpatient claims carry materially higher average amounts.
+**No year-over-year measures:** the claims cover roughly 13 months
+(late Nov 2008 to Dec 2009), so a prior-year comparison would be empty for
+almost every period. Month-over-month and quarter-over-quarter trends are used
+instead.
 
 ---
 
-## 5. Notes on `state_code`
+## 4. Notes on `state_code`
 
-`dim_patient[state_code]` is a raw numeric SSA/CMS state code inherited
-directly from the source dataset (see
-[`docs/data-dictionary.md`](../docs/data-dictionary.md), "State/County
-Codes" data-quality note — a human-readable state-name mapping was
-explicitly called out there as **not included** in the current ETL). The
-Power BI layer keeps `state_code` numeric for the same reason rather than
-guessing at a mapping; a state name/abbreviation lookup table can be added
-later as a proper dimension if one is sourced and verified.
+`dim_patient[state_code]` is a raw numeric SSA/CMS state code inherited from
+the source dataset (see [`docs/data-dictionary.md`](../docs/data-dictionary.md)).
+No verified code-to-name mapping is included in the ETL, so the model keeps
+the code numeric and does not plot it on a map. It is still a valid key for
+row-level security, which is how it is used in
+[`RLS_DESIGN.md`](./RLS_DESIGN.md).

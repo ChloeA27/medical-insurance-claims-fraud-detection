@@ -192,11 +192,16 @@ def load_providers(all_claims: pd.DataFrame) -> pd.DataFrame:
 # ──────────────────────────────────────────────────────────────────────────
 
 def build_dim_date(all_claims: pd.DataFrame) -> pd.DataFrame:
-    """Mirrors sql/02-dims/dim_date_etl.sql"""
-    dates = pd.concat([
+    """Mirrors sql/02-dims/dim_date_etl.sql, with one deliberate difference:
+    the SQL version only keeps dates that appear in claims (398 rows, with
+    gaps), while Power BI's "Mark as date table" and time-intelligence
+    functions need a contiguous calendar. So this builds every day from
+    Jan 1 of the first claim year to Dec 31 of the last claim year."""
+    seen = pd.concat([
         all_claims["claim_start_date"], all_claims["claim_end_date"],
         all_claims["admission_date"], all_claims["discharge_date"],
-    ]).dropna().drop_duplicates().sort_values()
+    ]).dropna()
+    dates = pd.date_range(f"{seen.min().year}-01-01", f"{seen.max().year}-12-31", freq="D")
 
     dim = pd.DataFrame({"full_date": dates})
     dim["date_key"] = dim["full_date"].dt.strftime("%Y%m%d").astype(int)

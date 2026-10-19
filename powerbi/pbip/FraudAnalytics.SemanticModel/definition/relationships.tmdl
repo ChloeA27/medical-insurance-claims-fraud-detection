@@ -1,0 +1,39 @@
+relationship rel_01_fact_claims_patient_sk
+	fromColumn: fact_claims.patient_sk
+	toColumn: dim_patient.patient_sk
+
+relationship rel_02_fact_claims_provider_sk
+	fromColumn: fact_claims.provider_sk
+	toColumn: dim_provider.provider_sk
+
+relationship rel_03_fact_claims_claim_start_date_key
+	fromColumn: fact_claims.claim_start_date_key
+	toColumn: dim_date.date_key
+
+relationship rel_04_fact_claims_claim_end_date_key
+	isActive: false
+	fromColumn: fact_claims.claim_end_date_key
+	toColumn: dim_date.date_key
+
+relationship rel_05_fact_claims_admission_date_key
+	isActive: false
+	fromColumn: fact_claims.admission_date_key
+	toColumn: dim_date.date_key
+
+relationship rel_06_fact_claims_discharge_date_key
+	isActive: false
+	fromColumn: fact_claims.discharge_date_key
+	toColumn: dim_date.date_key
+
+relationship rel_07_fact_claims_diagnosis_code_1
+	fromColumn: fact_claims.diagnosis_code_1
+	toColumn: dim_diagnosis.diagnosis_code
+
+relationship rel_08_fact_claims_procedure_code_1
+	fromColumn: fact_claims.procedure_code_1
+	toColumn: dim_procedure.procedure_code
+
+relationship rel_09_fact_patient_claims_summary_patient_sk
+	fromColumn: fact_patient_claims_summary.patient_sk
+	toColumn: dim_patient.patient_sk
+

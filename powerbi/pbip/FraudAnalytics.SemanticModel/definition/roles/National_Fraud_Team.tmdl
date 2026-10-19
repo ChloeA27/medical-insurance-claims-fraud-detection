@@ -1,0 +1,5 @@
+role National_Fraud_Team
+	modelPermission: read
+
+	annotation PBI_Id = 8aadbfae0b5645229265c6693ab8aa75
+

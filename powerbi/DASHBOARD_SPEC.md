@@ -2,69 +2,71 @@
 
 Two-page Power BI report built on the semantic model in
 [`SEMANTIC_MODEL.md`](./SEMANTIC_MODEL.md). Page 1 is an executive summary;
-Page 2 drills into provider-level risk.
+page 2 drills into provider-level risk. Every visual uses measures from
+`fact_claims` so that the RLS roles in [`RLS_DESIGN.md`](./RLS_DESIGN.md)
+filter the whole report.
 
 ---
 
-## Page 1 — Executive Fraud Overview
+## Page 1: Executive Fraud Overview
 
-**Audience:** Leadership / stakeholders who need a fast read on fraud
-exposure and where it's concentrated. No drill-down expected — glanceable
-KPIs plus two supporting trend/geo visuals.
+**Audience:** leadership who need a fast read on fraud exposure and where it
+is concentrated.
 
 | # | Visual | Fields | Purpose |
 |---|--------|--------|---------|
-| 1 | KPI card | `[Total Fraud Exposure $]` | Headline number |
-| 2 | KPI card | `[Fraud Rate %]` | Headline number |
-| 3 | KPI card | `[Distinct Fraudulent Providers]` | Headline number |
-| 4 | KPI card | `COUNTROWS(fact_claims)` (Total Claims) | Headline number |
-| 5 | Line chart | X: `dim_date[year_month]`; Y: `SUM(fact_claims[claim_amount])` and `[Total Fraud Exposure $]` (dual series) | Claim volume vs. fraud exposure trend over time |
-| 6 | Filled map (or shape map) | Location: `dim_patient[state_code]`; Size/Color: `[Total Fraud Exposure $]` | Geographic concentration of fraud exposure |
-| 7 | Donut chart | Legend: `fact_claims[claim_type]` (Inpatient/Outpatient); Values: `SUM(fact_claims[claim_amount])` | Claim-type mix |
-| 8 | Bar chart | Axis: `dim_provider[risk_level]`; Values: `COUNTROWS(dim_provider)` | Provider risk-tier distribution (Confirmed Fraud / High / Medium / Low Risk) |
+| 1 | Card | `[Total Claims]` | Headline volume |
+| 2 | Card | `[Total Fraud Exposure $]` | Headline exposure |
+| 3 | Card | `[Fraud Rate %]` | Share of claims from flagged providers (by count) |
+| 4 | Card | `[Fraud Exposure % of Total $]` | Share of reimbursed dollars from flagged providers (by value) |
+| 5 | Card | `[Top 50 Provider Fraud Share %]` | Risk-concentration headline |
+| 6 | Line chart | X: `dim_date[year_month]`; Y: `[Total Claim Amount $]` and `[Total Fraud Exposure $]` | Claim volume vs. fraud exposure over time |
+| 7 | Clustered bar | Axis: `dim_provider[provider_type]`; Values: `[Total Fraud Exposure $]` | Where exposure sits by provider type |
+| 8 | Donut | Legend: `fact_claims[claim_type]`; Values: `[Total Claim Amount $]` | Inpatient vs. outpatient dollar mix |
+| 9 | Clustered bar | Axis: `dim_provider[risk_level]`; Values: `[Total Claims]` | Claims by provider risk tier |
 
 **Interactions:**
-- Visual 5 (trend line) cross-filters visuals 6–8 on click-and-drag date range selection
-- Visual 6 (map) cross-filters all other visuals on state click (single-select)
-- A top-of-page slicer on `dim_date[year]` filters the whole page
-- KPI cards (1–4) do not cross-filter (fixed headline context) but do respond to the year slicer and map selection
+- A `dim_date[year]` slicer at the top filters the whole page.
+- Selecting a provider type (visual 7) or claim type (visual 8) cross-filters
+  the trend line and the risk-tier bar.
+- Cards respond to the slicer and to selections but do not cross-filter.
 
 ---
 
-## Page 2 — Provider Risk Deep-Dive
+## Page 2: Provider Risk Deep-Dive
 
-**Audience:** Fraud investigation analysts who need to identify and
-prioritize specific providers for review.
+**Audience:** fraud investigation analysts who need to identify and
+prioritize providers for review.
 
 | # | Visual | Fields | Purpose |
 |---|--------|--------|---------|
-| 1 | Table | `dim_provider[provider_id]`, `dim_provider[risk_level]`, `dim_provider[total_claims]`, `dim_provider[total_amount]`, `dim_provider[avg_claim_amount]`, `dim_provider[provider_type]`, `dim_provider[activity_level]` | Sortable/filterable provider risk register — the primary investigation tool on this page |
-| 2 | KPI card | `[Top 50 Provider Fraud Share %]` | Risk-concentration headline |
-| 3 | Bar chart (top N) | Axis: `dim_provider[provider_id]` (Top 20 by `total_amount`, filtered to `is_fraudulent = TRUE`); Values: `dim_provider[total_amount]` | Highest-exposure fraudulent providers |
-| 4 | Scatter chart | X: `dim_provider[total_claims]`; Y: `dim_provider[avg_claim_amount]`; Color: `dim_provider[risk_level]`; Size: `dim_provider[total_amount]` | Volume vs. average-amount outlier detection — flags providers billing unusually high average amounts relative to peers |
-| 5 | Bar chart | Axis: `dim_diagnosis[icd9_chapter]`; Values: `COUNTROWS(fact_claims)`, filtered to selected provider | Diagnosis-mix profile for a selected provider (drill target from visual 1) |
-| 6 | Slicer | `dim_provider[provider_type]` (Hospital Only / Clinic Only / Primarily Hospital / Primarily Clinic / Mixed) | Filter the register by provider type |
-| 7 | Slicer | `dim_provider[risk_level]` | Filter the register by risk tier |
+| 1 | Table | `dim_provider[provider_id]`, `dim_provider[risk_level]`, `dim_provider[provider_type]`, `[Total Claims]`, `[Total Claim Amount $]`, `[Avg Claim Amount]`, `[Inpatient Share %]` | Sortable provider risk register, the main investigation tool. Uses measures so RLS applies |
+| 2 | Card | `[Distinct Fraudulent Providers]` | Count of flagged providers in view |
+| 3 | Card | `[Fraud Exposure per Fraudulent Provider $]` | Average exposure per flagged provider |
+| 4 | Bar chart (Top N = 20) | Axis: `dim_provider[provider_id]`; Values: `[Total Fraud Exposure $]` | Highest-exposure flagged providers |
+| 5 | Scatter | Details: `dim_provider[provider_id]`; X: `[Total Claims]`; Y: `[Avg Claim Amount]`; Legend: `dim_provider[risk_level]` | Volume vs. average amount outlier view |
+| 6 | Table | `dim_diagnosis[icd9_chapter]`, `[Total Claims]`, `[Fraud Rate %]`, `[Fraud Rate Lift (x)]` | Which diagnosis chapters run above the baseline fraud rate |
+| 7 | Slicer | `dim_provider[provider_type]` | Filter by provider type |
+| 8 | Slicer | `dim_provider[risk_level]` | Filter by risk tier |
 
 **Interactions:**
-- Selecting a row in the provider table (visual 1) filters visual 5 (diagnosis mix) to that provider — this is the primary drill-down path on the page
-- Visual 3 (top fraud providers bar) selection cross-filters the table (visual 1) and visual 5
-- Visual 4 (scatter) selection cross-filters the table
-- Slicers 6–7 filter visuals 1, 3, and 4 simultaneously
-- A **"Reset to National view"** bookmark/button clears all page-2 selections, for use after `View As Role` testing per `RLS_DESIGN.md` §5
+- Selecting a provider in the register (visual 1) filters the diagnosis table
+  (visual 6) to that provider's claims. This is the main drill-down path.
+- Selecting a bar in visual 4 or a point in visual 5 cross-filters the
+  register.
+- Slicers 7 and 8 filter visuals 1, 4, 5, and 6.
+- A **Reset** bookmark button clears all page 2 selections, for use after
+  testing roles with **View as**.
 
 ---
 
 ## Shared Design Notes
 
-- Both pages share a common date slicer (`dim_date[year]`) synced via
-  Power BI's Sync Slicers feature, so switching pages preserves the
-  selected year
-- Currency fields formatted as `$#,##0` (no decimals — claim amounts are
-  large); percentages formatted as `0.0%`
-- Color encoding for `risk_level` / fraud status kept consistent across
-  both pages: Confirmed Fraud = red, High Risk = orange, Medium Risk =
-  yellow, Low Risk = green
-- Screenshots of the finished pages will be added to `powerbi/screenshots/`
-  and linked from the main [README.md](../README.md) once built in Power BI
-  Desktop
+- Both pages share the `dim_date[year]` slicer through **Sync slicers**.
+- Currency is formatted as `$#,##0` and percentages as `0.0%` (set in the
+  model, so visuals inherit it).
+- Risk-level colors are consistent across pages: Confirmed Fraud = red,
+  High Risk = orange, Medium Risk = yellow, Low Risk = green.
+- The original design included a state-level map. It was dropped because
+  `state_code` is a numeric code with no verified state-name mapping in this
+  dataset, so a map would have required guessing.

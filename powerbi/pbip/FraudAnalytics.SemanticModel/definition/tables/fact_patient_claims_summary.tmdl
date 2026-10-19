@@ -1,0 +1,65 @@
+table fact_patient_claims_summary
+	lineageTag: 1a7dd665-8d7a-4133-b73b-35fb3745934d
+
+	column patient_sk
+		dataType: int64
+		isHidden
+		lineageTag: aa4e54d2-cfea-483c-85c4-4247af9e27ba
+		summarizeBy: none
+		sourceColumn: patient_sk
+
+	column month_key
+		dataType: int64
+		lineageTag: 94785b04-bfb3-4709-a818-9afbca2de83d
+		summarizeBy: none
+		sourceColumn: month_key
+
+	column total_claims
+		dataType: int64
+		lineageTag: 82c4931a-fcf1-4a77-805e-89fe798003aa
+		summarizeBy: sum
+		sourceColumn: total_claims
+
+	column inpatient_visits
+		dataType: int64
+		lineageTag: dda686e9-aca2-4955-8151-0673155a3c01
+		summarizeBy: sum
+		sourceColumn: inpatient_visits
+
+	column outpatient_visits
+		dataType: int64
+		lineageTag: 2bc2c693-b538-4464-9078-9faed79f7416
+		summarizeBy: sum
+		sourceColumn: outpatient_visits
+
+	column total_claimed
+		dataType: int64
+		formatString: $#,##0
+		lineageTag: 0c12c571-73ef-4a7a-a6c5-1d50e4016d02
+		summarizeBy: sum
+		sourceColumn: total_claimed
+
+	column total_deductible
+		dataType: double
+		formatString: $#,##0
+		lineageTag: a7babed2-29a5-4f9c-9a6d-fa77544ef781
+		summarizeBy: sum
+		sourceColumn: total_deductible
+
+	column fraudulent_provider_visits
+		dataType: int64
+		lineageTag: b7041a08-b12e-49ab-ad5e-a4a27e44c102
+		summarizeBy: sum
+		sourceColumn: fraudulent_provider_visits
+
+	column fraud_exposure_amount
+		dataType: int64
+		formatString: $#,##0
+		lineageTag: b70b36bb-1af2-44eb-a2e1-2901d8172161
+		summarizeBy: sum
+		sourceColumn: fraud_exposure_amount
+
+	partition fact_patient_claims_summary = m
+		mode: import
+		source = let Source = Csv.Document(File.Contents(ExtractsFolder & "\fact_patient_claims_summary.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]), Selected = Table.SelectColumns(Promoted, {"patient_sk", "month_key", "total_claims", "inpatient_visits", "outpatient_visits", "total_claimed", "total_deductible", "fraudulent_provider_visits", "fraud_exposure_amount"}), Typed = Table.TransformColumnTypes(Selected, {{"patient_sk", Int64.Type}, {"month_key", Int64.Type}, {"total_claims", Int64.Type}, {"inpatient_visits", Int64.Type}, {"outpatient_visits", Int64.Type}, {"total_claimed", Int64.Type}, {"total_deductible", type number}, {"fraudulent_provider_visits", Int64.Type}, {"fraud_exposure_amount", Int64.Type}}, "en-US") in Typed
+

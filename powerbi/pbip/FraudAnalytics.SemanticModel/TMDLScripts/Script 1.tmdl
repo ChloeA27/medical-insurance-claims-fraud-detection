@@ -1,0 +1,563 @@
+createOrReplace
+
+	expression ExtractsFolder = "C:\fraud-extracts" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+
+	table dim_date
+		dataCategory: Time
+
+		column date_key
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: date_key
+
+		column full_date
+			dataType: dateTime
+			isKey
+			formatString: yyyy-mm-dd
+			summarizeBy: none
+			sourceColumn: full_date
+
+		column year
+			dataType: int64
+			summarizeBy: none
+			sourceColumn: year
+
+		column quarter
+			dataType: int64
+			summarizeBy: none
+			sourceColumn: quarter
+
+		column month
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: month
+
+		column month_name
+			dataType: string
+			summarizeBy: none
+			sourceColumn: month_name
+			sortByColumn: month
+
+		column day_of_month
+			dataType: int64
+			summarizeBy: none
+			sourceColumn: day_of_month
+
+		column day_of_week
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: day_of_week
+
+		column day_name
+			dataType: string
+			summarizeBy: none
+			sourceColumn: day_name
+			sortByColumn: day_of_week
+
+		column is_weekend
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: is_weekend
+
+		column year_month
+			dataType: string
+			summarizeBy: none
+			sourceColumn: year_month
+
+		partition dim_date = m
+			mode: import
+			source = let Source = Csv.Document(File.Contents(ExtractsFolder & "\dim_date.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]), Selected = Table.SelectColumns(Promoted, {"date_key", "full_date", "year", "quarter", "month", "month_name", "day_of_month", "day_of_week", "day_name", "is_weekend", "year_month"}), Typed = Table.TransformColumnTypes(Selected, {{"date_key", Int64.Type}, {"full_date", type date}, {"year", Int64.Type}, {"quarter", Int64.Type}, {"month", Int64.Type}, {"month_name", type text}, {"day_of_month", Int64.Type}, {"day_of_week", Int64.Type}, {"day_name", type text}, {"is_weekend", type logical}, {"year_month", type text}}, "en-US") in Typed
+
+	table dim_patient
+
+		column patient_sk
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: patient_sk
+
+		column patient_id
+			dataType: string
+			summarizeBy: none
+			sourceColumn: patient_id
+
+		column gender
+			dataType: string
+			summarizeBy: none
+			sourceColumn: gender
+
+		column race
+			dataType: string
+			summarizeBy: none
+			sourceColumn: race
+
+		column state_code
+			dataType: int64
+			summarizeBy: none
+			sourceColumn: state_code
+
+		column county_code
+			dataType: int64
+			summarizeBy: none
+			sourceColumn: county_code
+
+		column has_renal_disease
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: has_renal_disease
+
+		column has_alzheimer
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: has_alzheimer
+
+		column has_heart_failure
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: has_heart_failure
+
+		column has_kidney_disease
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: has_kidney_disease
+
+		column has_cancer
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: has_cancer
+
+		column has_copd
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: has_copd
+
+		column has_depression
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: has_depression
+
+		column has_diabetes
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: has_diabetes
+
+		column has_ischemic_heart
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: has_ischemic_heart
+
+		column has_osteoporosis
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: has_osteoporosis
+
+		column has_arthritis
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: has_arthritis
+
+		column has_stroke
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: has_stroke
+
+		column chronic_condition_count
+			dataType: int64
+			summarizeBy: none
+			sourceColumn: chronic_condition_count
+
+		column is_deceased
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: is_deceased
+
+		column risk_category
+			dataType: string
+			summarizeBy: none
+			sourceColumn: risk_category
+
+		partition dim_patient = m
+			mode: import
+			source = let Source = Csv.Document(File.Contents(ExtractsFolder & "\dim_patient.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]), Selected = Table.SelectColumns(Promoted, {"patient_sk", "patient_id", "gender", "race", "state_code", "county_code", "has_renal_disease", "has_alzheimer", "has_heart_failure", "has_kidney_disease", "has_cancer", "has_copd", "has_depression", "has_diabetes", "has_ischemic_heart", "has_osteoporosis", "has_arthritis", "has_stroke", "chronic_condition_count", "is_deceased", "risk_category"}), Typed = Table.TransformColumnTypes(Selected, {{"patient_sk", Int64.Type}, {"patient_id", type text}, {"gender", type text}, {"race", type text}, {"state_code", Int64.Type}, {"county_code", Int64.Type}, {"has_renal_disease", type logical}, {"has_alzheimer", type logical}, {"has_heart_failure", type logical}, {"has_kidney_disease", type logical}, {"has_cancer", type logical}, {"has_copd", type logical}, {"has_depression", type logical}, {"has_diabetes", type logical}, {"has_ischemic_heart", type logical}, {"has_osteoporosis", type logical}, {"has_arthritis", type logical}, {"has_stroke", type logical}, {"chronic_condition_count", Int64.Type}, {"is_deceased", type logical}, {"risk_category", type text}}, "en-US") in Typed
+
+	table dim_provider
+
+		column provider_sk
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: provider_sk
+
+		column provider_id
+			dataType: string
+			summarizeBy: none
+			sourceColumn: provider_id
+
+		column is_fraudulent
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: is_fraudulent
+
+		column provider_type
+			dataType: string
+			summarizeBy: none
+			sourceColumn: provider_type
+
+		column risk_level
+			dataType: string
+			summarizeBy: none
+			sourceColumn: risk_level
+
+		column activity_level
+			dataType: string
+			summarizeBy: none
+			sourceColumn: activity_level
+
+		column avg_length_of_stay
+			dataType: double
+			formatString: 0.0
+			summarizeBy: none
+			sourceColumn: avg_length_of_stay
+
+		partition dim_provider = m
+			mode: import
+			source = let Source = Csv.Document(File.Contents(ExtractsFolder & "\dim_provider.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]), Selected = Table.SelectColumns(Promoted, {"provider_sk", "provider_id", "is_fraudulent", "provider_type", "risk_level", "activity_level", "avg_length_of_stay"}), Typed = Table.TransformColumnTypes(Selected, {{"provider_sk", Int64.Type}, {"provider_id", type text}, {"is_fraudulent", type logical}, {"provider_type", type text}, {"risk_level", type text}, {"activity_level", type text}, {"avg_length_of_stay", type number}}, "en-US") in Typed
+
+	table dim_diagnosis
+
+		column diagnosis_code
+			dataType: string
+			summarizeBy: none
+			sourceColumn: diagnosis_code
+
+		column icd9_chapter
+			dataType: string
+			summarizeBy: none
+			sourceColumn: icd9_chapter
+
+		column subcategory
+			dataType: string
+			summarizeBy: none
+			sourceColumn: subcategory
+
+		column is_chronic
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: is_chronic
+
+		column risk_level
+			dataType: string
+			summarizeBy: none
+			sourceColumn: risk_level
+
+		column cost_category
+			dataType: string
+			summarizeBy: none
+			sourceColumn: cost_category
+
+		partition dim_diagnosis = m
+			mode: import
+			source = let Source = Csv.Document(File.Contents(ExtractsFolder & "\dim_diagnosis.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]), Selected = Table.SelectColumns(Promoted, {"diagnosis_code", "icd9_chapter", "subcategory", "is_chronic", "risk_level", "cost_category"}), Typed = Table.TransformColumnTypes(Selected, {{"diagnosis_code", type text}, {"icd9_chapter", type text}, {"subcategory", type text}, {"is_chronic", type logical}, {"risk_level", type text}, {"cost_category", type text}}, "en-US") in Typed
+
+	table dim_procedure
+
+		column procedure_code
+			dataType: string
+			summarizeBy: none
+			sourceColumn: procedure_code
+
+		column code_type
+			dataType: string
+			summarizeBy: none
+			sourceColumn: code_type
+
+		column procedure_category
+			dataType: string
+			summarizeBy: none
+			sourceColumn: procedure_category
+
+		column is_major_procedure
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: is_major_procedure
+
+		column risk_level
+			dataType: string
+			summarizeBy: none
+			sourceColumn: risk_level
+
+		column cost_category
+			dataType: string
+			summarizeBy: none
+			sourceColumn: cost_category
+
+		partition dim_procedure = m
+			mode: import
+			source = let Source = Csv.Document(File.Contents(ExtractsFolder & "\dim_procedure.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]), Selected = Table.SelectColumns(Promoted, {"procedure_code", "code_type", "procedure_category", "is_major_procedure", "risk_level", "cost_category"}), Typed = Table.TransformColumnTypes(Selected, {{"procedure_code", type text}, {"code_type", type text}, {"procedure_category", type text}, {"is_major_procedure", type logical}, {"risk_level", type text}, {"cost_category", type text}}, "en-US") in Typed
+
+	table fact_claims
+
+		measure 'Total Claims' = COUNTROWS ( fact_claims )
+			formatString: #,##0
+			displayFolder: Core
+
+		measure 'Total Claim Amount $' = SUM ( fact_claims[claim_amount] )
+			formatString: $#,##0
+			displayFolder: Core
+
+		measure 'Avg Claim Amount' = AVERAGE ( fact_claims[claim_amount] )
+			formatString: $#,##0
+			displayFolder: Core
+
+		measure 'Inpatient Share %' = DIVIDE ( CALCULATE ( [Total Claims], fact_claims[claim_type] = "Inpatient" ), [Total Claims] )
+			formatString: 0.0%
+			displayFolder: Core
+
+		measure 'Fraud Claim Count' = CALCULATE ( [Total Claims], fact_claims[is_fraudulent] = TRUE () )
+			formatString: #,##0
+			displayFolder: Fraud Exposure
+
+		measure 'Fraud Rate %' = DIVIDE ( [Fraud Claim Count], [Total Claims] )
+			formatString: 0.0%
+			displayFolder: Fraud Exposure
+
+		measure 'Total Fraud Exposure $' = CALCULATE ( [Total Claim Amount $], fact_claims[is_fraudulent] = TRUE () )
+			formatString: $#,##0
+			displayFolder: Fraud Exposure
+
+		measure 'Fraud Exposure % of Total $' = DIVIDE ( [Total Fraud Exposure $], [Total Claim Amount $] )
+			formatString: 0.0%
+			displayFolder: Fraud Exposure
+
+		measure 'Fraud Rate Lift (x)' = VAR Baseline = CALCULATE ( [Fraud Rate %], REMOVEFILTERS ( dim_diagnosis ), REMOVEFILTERS ( dim_procedure ) ) RETURN DIVIDE ( [Fraud Rate %], Baseline )
+			formatString: 0.00
+			displayFolder: Fraud Exposure
+
+		measure 'Distinct Fraudulent Providers' = CALCULATE ( DISTINCTCOUNT ( fact_claims[provider_sk] ), fact_claims[is_fraudulent] = TRUE () )
+			formatString: #,##0
+			displayFolder: Provider Risk
+
+		measure 'Fraud Exposure per Fraudulent Provider $' = DIVIDE ( [Total Fraud Exposure $], [Distinct Fraudulent Providers] )
+			formatString: $#,##0
+			displayFolder: Provider Risk
+
+		measure 'Top 50 Provider Fraud Share %' = VAR ProviderFraud = ADDCOLUMNS ( CALCULATETABLE ( VALUES ( fact_claims[provider_sk] ), fact_claims[is_fraudulent] = TRUE () ), "@FraudAmt", [Total Fraud Exposure $] ) VAR Top50Total = SUMX ( TOPN ( 50, ProviderFraud, [@FraudAmt], DESC ), [@FraudAmt] ) RETURN DIVIDE ( Top50Total, SUMX ( ProviderFraud, [@FraudAmt] ) )
+			formatString: 0.0%
+			displayFolder: Provider Risk
+
+		measure 'Claim Amount Prior Month $' = CALCULATE ( [Total Claim Amount $], DATEADD ( dim_date[full_date], -1, MONTH ) )
+			formatString: $#,##0
+			displayFolder: Trend
+
+		measure 'Claim Amount MoM %' = DIVIDE ( [Total Claim Amount $] - [Claim Amount Prior Month $], [Claim Amount Prior Month $] )
+			formatString: 0.0%
+			displayFolder: Trend
+
+		measure 'Claim Count QoQ %' = VAR PriorQ = CALCULATE ( [Total Claims], DATEADD ( dim_date[full_date], -1, QUARTER ) ) RETURN DIVIDE ( [Total Claims] - PriorQ, PriorQ )
+			formatString: 0.0%
+			displayFolder: Trend
+
+		column claim_sk
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: claim_sk
+
+		column patient_sk
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: patient_sk
+
+		column provider_sk
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: provider_sk
+
+		column claim_start_date_key
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: claim_start_date_key
+
+		column claim_end_date_key
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: claim_end_date_key
+
+		column admission_date_key
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: admission_date_key
+
+		column discharge_date_key
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: discharge_date_key
+
+		column claim_id
+			dataType: string
+			summarizeBy: none
+			sourceColumn: claim_id
+
+		column claim_type
+			dataType: string
+			summarizeBy: none
+			sourceColumn: claim_type
+
+		column claim_amount
+			dataType: int64
+			formatString: $#,##0
+			summarizeBy: sum
+			sourceColumn: claim_amount
+
+		column deductible_amount
+			dataType: double
+			formatString: $#,##0
+			summarizeBy: sum
+			sourceColumn: deductible_amount
+
+		column length_of_stay
+			dataType: int64
+			summarizeBy: average
+			sourceColumn: length_of_stay
+
+		column is_fraudulent
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: is_fraudulent
+
+		column diagnosis_code_1
+			dataType: string
+			isHidden
+			summarizeBy: none
+			sourceColumn: diagnosis_code_1
+
+		column procedure_code_1
+			dataType: string
+			isHidden
+			summarizeBy: none
+			sourceColumn: procedure_code_1
+
+		partition fact_claims = m
+			mode: import
+			source = let Source = Csv.Document(File.Contents(ExtractsFolder & "\fact_claims.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]), Selected = Table.SelectColumns(Promoted, {"claim_sk", "patient_sk", "provider_sk", "claim_start_date_key", "claim_end_date_key", "admission_date_key", "discharge_date_key", "claim_id", "claim_type", "claim_amount", "deductible_amount", "length_of_stay", "is_fraudulent", "diagnosis_code_1", "procedure_code_1"}), Typed = Table.TransformColumnTypes(Selected, {{"claim_sk", Int64.Type}, {"patient_sk", Int64.Type}, {"provider_sk", Int64.Type}, {"claim_start_date_key", Int64.Type}, {"claim_end_date_key", Int64.Type}, {"admission_date_key", Int64.Type}, {"discharge_date_key", Int64.Type}, {"claim_id", type text}, {"claim_type", type text}, {"claim_amount", Int64.Type}, {"deductible_amount", type number}, {"length_of_stay", Int64.Type}, {"is_fraudulent", type logical}, {"diagnosis_code_1", type text}, {"procedure_code_1", type text}}, "en-US") in Typed
+
+	table fact_patient_claims_summary
+
+		column patient_sk
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: patient_sk
+
+		column month_key
+			dataType: int64
+			summarizeBy: none
+			sourceColumn: month_key
+
+		column total_claims
+			dataType: int64
+			summarizeBy: sum
+			sourceColumn: total_claims
+
+		column inpatient_visits
+			dataType: int64
+			summarizeBy: sum
+			sourceColumn: inpatient_visits
+
+		column outpatient_visits
+			dataType: int64
+			summarizeBy: sum
+			sourceColumn: outpatient_visits
+
+		column total_claimed
+			dataType: int64
+			formatString: $#,##0
+			summarizeBy: sum
+			sourceColumn: total_claimed
+
+		column total_deductible
+			dataType: double
+			formatString: $#,##0
+			summarizeBy: sum
+			sourceColumn: total_deductible
+
+		column fraudulent_provider_visits
+			dataType: int64
+			summarizeBy: sum
+			sourceColumn: fraudulent_provider_visits
+
+		column fraud_exposure_amount
+			dataType: int64
+			formatString: $#,##0
+			summarizeBy: sum
+			sourceColumn: fraud_exposure_amount
+
+		partition fact_patient_claims_summary = m
+			mode: import
+			source = let Source = Csv.Document(File.Contents(ExtractsFolder & "\fact_patient_claims_summary.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]), Selected = Table.SelectColumns(Promoted, {"patient_sk", "month_key", "total_claims", "inpatient_visits", "outpatient_visits", "total_claimed", "total_deductible", "fraudulent_provider_visits", "fraud_exposure_amount"}), Typed = Table.TransformColumnTypes(Selected, {{"patient_sk", Int64.Type}, {"month_key", Int64.Type}, {"total_claims", Int64.Type}, {"inpatient_visits", Int64.Type}, {"outpatient_visits", Int64.Type}, {"total_claimed", Int64.Type}, {"total_deductible", type number}, {"fraudulent_provider_visits", Int64.Type}, {"fraud_exposure_amount", Int64.Type}}, "en-US") in Typed
+
+	relationship rel_01_fact_claims_patient_sk
+		fromColumn: fact_claims.patient_sk
+		toColumn: dim_patient.patient_sk
+
+	relationship rel_02_fact_claims_provider_sk
+		fromColumn: fact_claims.provider_sk
+		toColumn: dim_provider.provider_sk
+
+	relationship rel_03_fact_claims_claim_start_date_key
+		fromColumn: fact_claims.claim_start_date_key
+		toColumn: dim_date.date_key
+
+	relationship rel_04_fact_claims_claim_end_date_key
+		isActive: false
+		fromColumn: fact_claims.claim_end_date_key
+		toColumn: dim_date.date_key
+
+	relationship rel_05_fact_claims_admission_date_key
+		isActive: false
+		fromColumn: fact_claims.admission_date_key
+		toColumn: dim_date.date_key
+
+	relationship rel_06_fact_claims_discharge_date_key
+		isActive: false
+		fromColumn: fact_claims.discharge_date_key
+		toColumn: dim_date.date_key
+
+	relationship rel_07_fact_claims_diagnosis_code_1
+		fromColumn: fact_claims.diagnosis_code_1
+		toColumn: dim_diagnosis.diagnosis_code
+
+	relationship rel_08_fact_claims_procedure_code_1
+		fromColumn: fact_claims.procedure_code_1
+		toColumn: dim_procedure.procedure_code
+
+	relationship rel_09_fact_patient_claims_summary_patient_sk
+		fromColumn: fact_patient_claims_summary.patient_sk
+		toColumn: dim_patient.patient_sk
+
+	role Analyst_State05
+		modelPermission: read
+
+		tablePermission dim_patient = [state_code] = 5
+
+	role Analyst_State10
+		modelPermission: read
+
+		tablePermission dim_patient = [state_code] = 10
+
+	role Analyst_MultiState
+		modelPermission: read
+
+		tablePermission dim_patient = [state_code] IN { 5, 10, 45 }
+
+	role National_Fraud_Team
+		modelPermission: read

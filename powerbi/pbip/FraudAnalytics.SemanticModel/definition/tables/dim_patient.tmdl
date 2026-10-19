@@ -1,0 +1,134 @@
+table dim_patient
+	lineageTag: 12cd6f83-8393-4355-81b9-fa4820c67239
+
+	column patient_sk
+		dataType: int64
+		isHidden
+		lineageTag: 3af84b7b-c310-4497-af76-e88f99022e4a
+		summarizeBy: none
+		sourceColumn: patient_sk
+
+	column patient_id
+		dataType: string
+		lineageTag: f53803db-c4c2-4c81-b3a5-480354066e37
+		summarizeBy: none
+		sourceColumn: patient_id
+
+	column gender
+		dataType: string
+		lineageTag: 146c9494-d8e6-4151-be92-bb0f11c06525
+		summarizeBy: none
+		sourceColumn: gender
+
+	column race
+		dataType: string
+		lineageTag: b86326d2-fffb-4fc2-b671-c4ed5863ac9d
+		summarizeBy: none
+		sourceColumn: race
+
+	column state_code
+		dataType: int64
+		lineageTag: ff133d22-545d-45ad-96fa-c8a9b547c6d4
+		summarizeBy: none
+		sourceColumn: state_code
+
+	column county_code
+		dataType: int64
+		lineageTag: a1be497f-624c-49ac-a695-49b1f4ad5ed1
+		summarizeBy: none
+		sourceColumn: county_code
+
+	column has_renal_disease
+		dataType: boolean
+		lineageTag: 00d1be13-a94f-473f-99e5-cb8ee9043ce0
+		summarizeBy: none
+		sourceColumn: has_renal_disease
+
+	column has_alzheimer
+		dataType: boolean
+		lineageTag: cce08811-95ce-4ecd-8cde-aeb267b0b865
+		summarizeBy: none
+		sourceColumn: has_alzheimer
+
+	column has_heart_failure
+		dataType: boolean
+		lineageTag: 14e46975-097d-4374-b2b0-40abcfc631e6
+		summarizeBy: none
+		sourceColumn: has_heart_failure
+
+	column has_kidney_disease
+		dataType: boolean
+		lineageTag: 45ddafcc-7f07-4721-8a90-612bdd14f8b4
+		summarizeBy: none
+		sourceColumn: has_kidney_disease
+
+	column has_cancer
+		dataType: boolean
+		lineageTag: f1b7c044-4108-4899-8c99-8f87929c9efa
+		summarizeBy: none
+		sourceColumn: has_cancer
+
+	column has_copd
+		dataType: boolean
+		lineageTag: 224b17db-f92f-4966-a6ee-c8fb6ab6a8bf
+		summarizeBy: none
+		sourceColumn: has_copd
+
+	column has_depression
+		dataType: boolean
+		lineageTag: 5d7efb7b-7e9c-4f9a-9ded-d38d64d415f2
+		summarizeBy: none
+		sourceColumn: has_depression
+
+	column has_diabetes
+		dataType: boolean
+		lineageTag: 5bf33e8c-0a73-4fae-a140-9ec76c0ca1b6
+		summarizeBy: none
+		sourceColumn: has_diabetes
+
+	column has_ischemic_heart
+		dataType: boolean
+		lineageTag: aa20eaac-6945-4480-9ea9-22018f6a70e8
+		summarizeBy: none
+		sourceColumn: has_ischemic_heart
+
+	column has_osteoporosis
+		dataType: boolean
+		lineageTag: b02fc957-5f0d-443e-bcc0-b43e86a7591c
+		summarizeBy: none
+		sourceColumn: has_osteoporosis
+
+	column has_arthritis
+		dataType: boolean
+		lineageTag: 42b583e4-5bb4-447f-9eb8-61f4febce584
+		summarizeBy: none
+		sourceColumn: has_arthritis
+
+	column has_stroke
+		dataType: boolean
+		lineageTag: 997f8d63-15d9-4c72-a5c2-eef149cfc815
+		summarizeBy: none
+		sourceColumn: has_stroke
+
+	column chronic_condition_count
+		dataType: int64
+		lineageTag: c289c7ae-9fa4-4a0b-918b-800c84ec3a13
+		summarizeBy: none
+		sourceColumn: chronic_condition_count
+
+	column is_deceased
+		dataType: boolean
+		lineageTag: d155337c-4b3e-4765-af56-d23c63a4a322
+		summarizeBy: none
+		sourceColumn: is_deceased
+
+	column risk_category
+		dataType: string
+		lineageTag: 3c207697-901b-4cb3-929f-a936b81a6d3c
+		summarizeBy: none
+		sourceColumn: risk_category
+
+	partition dim_patient = m
+		mode: import
+		source = let Source = Csv.Document(File.Contents(ExtractsFolder & "\dim_patient.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]), Selected = Table.SelectColumns(Promoted, {"patient_sk", "patient_id", "gender", "race", "state_code", "county_code", "has_renal_disease", "has_alzheimer", "has_heart_failure", "has_kidney_disease", "has_cancer", "has_copd", "has_depression", "has_diabetes", "has_ischemic_heart", "has_osteoporosis", "has_arthritis", "has_stroke", "chronic_condition_count", "is_deceased", "risk_category"}), Typed = Table.TransformColumnTypes(Selected, {{"patient_sk", Int64.Type}, {"patient_id", type text}, {"gender", type text}, {"race", type text}, {"state_code", Int64.Type}, {"county_code", Int64.Type}, {"has_renal_disease", type logical}, {"has_alzheimer", type logical}, {"has_heart_failure", type logical}, {"has_kidney_disease", type logical}, {"has_cancer", type logical}, {"has_copd", type logical}, {"has_depression", type logical}, {"has_diabetes", type logical}, {"has_ischemic_heart", type logical}, {"has_osteoporosis", type logical}, {"has_arthritis", type logical}, {"has_stroke", type logical}, {"chronic_condition_count", Int64.Type}, {"is_deceased", type logical}, {"risk_category", type text}}, "en-US") in Typed
+

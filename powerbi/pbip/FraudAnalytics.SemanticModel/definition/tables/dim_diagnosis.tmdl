@@ -1,0 +1,43 @@
+table dim_diagnosis
+	lineageTag: 2f6faae8-bc04-4056-a754-70a3b0433ca3
+
+	column diagnosis_code
+		dataType: string
+		lineageTag: 4609dd8e-5e4e-416d-a617-614945ff37a2
+		summarizeBy: none
+		sourceColumn: diagnosis_code
+
+	column icd9_chapter
+		dataType: string
+		lineageTag: 4ada06f6-91a1-49f0-8656-aecda4af4e2c
+		summarizeBy: none
+		sourceColumn: icd9_chapter
+
+	column subcategory
+		dataType: string
+		lineageTag: 97bfaab7-b30d-486e-a258-225f0e5732c9
+		summarizeBy: none
+		sourceColumn: subcategory
+
+	column is_chronic
+		dataType: boolean
+		lineageTag: c4fdd850-9dfa-4e8a-92d0-3680fe78fa2a
+		summarizeBy: none
+		sourceColumn: is_chronic
+
+	column risk_level
+		dataType: string
+		lineageTag: 643a5e68-862e-4cc5-b86f-4c09f31f8b35
+		summarizeBy: none
+		sourceColumn: risk_level
+
+	column cost_category
+		dataType: string
+		lineageTag: fc0fbf7b-3b1f-487c-8e41-b01c603c662a
+		summarizeBy: none
+		sourceColumn: cost_category
+
+	partition dim_diagnosis = m
+		mode: import
+		source = let Source = Csv.Document(File.Contents(ExtractsFolder & "\dim_diagnosis.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]), Selected = Table.SelectColumns(Promoted, {"diagnosis_code", "icd9_chapter", "subcategory", "is_chronic", "risk_level", "cost_category"}), Typed = Table.TransformColumnTypes(Selected, {{"diagnosis_code", type text}, {"icd9_chapter", type text}, {"subcategory", type text}, {"is_chronic", type logical}, {"risk_level", type text}, {"cost_category", type text}}, "en-US") in Typed
+

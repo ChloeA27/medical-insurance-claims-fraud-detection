@@ -1,0 +1,43 @@
+table dim_procedure
+	lineageTag: 41ae421c-20e6-4414-810d-6e637e670a02
+
+	column procedure_code
+		dataType: string
+		lineageTag: 25728930-174b-4c4f-b6cc-7e352c86742b
+		summarizeBy: none
+		sourceColumn: procedure_code
+
+	column code_type
+		dataType: string
+		lineageTag: b2b3641c-b040-4d81-91f3-d2a0ca4e6b5a
+		summarizeBy: none
+		sourceColumn: code_type
+
+	column procedure_category
+		dataType: string
+		lineageTag: f18c52fc-8439-4163-bdb8-671abfd9e606
+		summarizeBy: none
+		sourceColumn: procedure_category
+
+	column is_major_procedure
+		dataType: boolean
+		lineageTag: 173fd662-a7b8-46a1-8d46-099eaa1817a5
+		summarizeBy: none
+		sourceColumn: is_major_procedure
+
+	column risk_level
+		dataType: string
+		lineageTag: 9030faa9-eb66-4917-8f0d-b191c95b3048
+		summarizeBy: none
+		sourceColumn: risk_level
+
+	column cost_category
+		dataType: string
+		lineageTag: 436d49f6-b84b-48bd-9bf4-c019b1b218e0
+		summarizeBy: none
+		sourceColumn: cost_category
+
+	partition dim_procedure = m
+		mode: import
+		source = let Source = Csv.Document(File.Contents(ExtractsFolder & "\dim_procedure.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]), Selected = Table.SelectColumns(Promoted, {"procedure_code", "code_type", "procedure_category", "is_major_procedure", "risk_level", "cost_category"}), Typed = Table.TransformColumnTypes(Selected, {{"procedure_code", type text}, {"code_type", type text}, {"procedure_category", type text}, {"is_major_procedure", type logical}, {"risk_level", type text}, {"cost_category", type text}}, "en-US") in Typed
+

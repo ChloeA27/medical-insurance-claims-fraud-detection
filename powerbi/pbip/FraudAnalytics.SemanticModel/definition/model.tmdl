@@ -1,0 +1,30 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: zh-CN
+	valueFilterBehavior: independent
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_ProTooling = ["TMDLView_Desktop","DaxQueryView_Desktop","DevMode"]
+
+annotation PBI_QueryOrder = ["dim_date","dim_patient","dim_provider","dim_diagnosis","dim_procedure","fact_claims","fact_patient_claims_summary","ExtractsFolder"]
+
+ref table dim_date
+ref table dim_patient
+ref table dim_provider
+ref table dim_diagnosis
+ref table dim_procedure
+ref table fact_claims
+ref table fact_patient_claims_summary
+
+ref role Analyst_State05
+ref role Analyst_State10
+ref role Analyst_MultiState
+ref role National_Fraud_Team
+
+ref cultureInfo en-US
+

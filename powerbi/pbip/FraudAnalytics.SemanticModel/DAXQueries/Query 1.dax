@@ -1,0 +1,11 @@
+DEFINE
+    MEASURE 'fact_claims'[Total Claim Amount $] = SUM ( fact_claims[claim_amount] )
+    MEASURE 'fact_claims'[Total Fraud Exposure $] = CALCULATE ( [Total Claim Amount $], fact_claims[is_fraudulent] = TRUE () )
+    MEASURE 'fact_claims'[Top 50 Provider Fraud Share %] = VAR ProviderFraud = ADDCOLUMNS ( CALCULATETABLE ( VALUES ( fact_claims[provider_sk] ), fact_claims[is_fraudulent] = TRUE () ), "@FraudAmt", [Total Fraud Exposure $] ) VAR Top50Total = SUMX ( TOPN ( 50, ProviderFraud, [@FraudAmt], DESC ), [@FraudAmt] ) RETURN DIVIDE ( Top50Total, SUMX ( ProviderFraud, [@FraudAmt] ) )
+
+EVALUATE
+    SUMMARIZECOLUMNS(
+        "Total Claim Amount $", [Total Claim Amount $],
+        "Total Fraud Exposure $", [Total Fraud Exposure $],
+        "Top 50 Provider Fraud Share %", [Top 50 Provider Fraud Share %]
+    )
